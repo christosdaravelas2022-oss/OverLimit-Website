@@ -186,16 +186,18 @@ function UpgradeModal({ tier, onClose }: UpgradeModalProps) {
                     </div>
                   </div>
 
-                  <button
-                    disabled={!(docsRead.terms && docsRead.privacy)}
-                    className={`w-full py-4 font-display font-black text-sm uppercase tracking-widest skew-btn border transition-all ${
+                  <a
+                    href={docsRead.terms && docsRead.privacy ? "https://discord.gg/83fQBbKYNE" : undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`w-full py-4 text-center block font-display font-black text-sm uppercase tracking-widest skew-btn border transition-all ${
                       docsRead.terms && docsRead.privacy 
-                        ? 'bg-light-cyan text-dark-black border-light-cyan shadow-[0_0_20px_rgba(0,191,255,0.4)]' 
-                        : 'bg-white/5 text-white/20 border-white/5 cursor-not-allowed opacity-50'
+                        ? 'bg-light-cyan text-dark-black border-light-cyan shadow-[0_0_20px_rgba(0,191,255,0.4)] cursor-pointer hover:bg-white' 
+                        : 'bg-white/5 text-white/20 border-white/5 cursor-not-allowed opacity-50 pointer-events-none'
                     }`}
                   >
                     {docsRead.terms && docsRead.privacy ? "PROCEED TO PURCHASE" : "LOCKED // REVIEW BOTH DOCUMENTS"}
-                  </button>
+                  </a>
                 </div>
               </motion.div>
             ) : (

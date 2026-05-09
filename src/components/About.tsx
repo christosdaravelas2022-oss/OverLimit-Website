@@ -25,7 +25,9 @@ export default function About() {
           </h2>
           <div className="space-y-6 font-sans text-soft-gray leading-relaxed text-lg">
             <p className="border-l-2 border-light-cyan/30 pl-6">
-              OVERLIMIT Roleplay is the premier Greek FiveM community built on a custom architecture that prioritizes fluidity, immersion, and stability. Developed by veterans for players who demand more from their RP experience.
+              OVERLIMIT Roleplay is the premier Greek FiveM community built on a custom architecture that prioritizes fluidity, immersion, and stability. 
+              <br /><br />
+              <span className="text-white font-bold">THE HIGHEST LIMIT:</span> Our server utilizes proprietary synchronization logic and optimized asset streaming to ensure zero-lag experience even during high-intensity 100+ player interactions.
             </p>
           </div>
 

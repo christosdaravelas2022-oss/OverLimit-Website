@@ -10,16 +10,21 @@ export default function Header() {
       className="fixed top-0 left-0 right-0 z-50 bg-dark-black/80 backdrop-blur-md border-b border-white/5"
       id="header"
     >
-      <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <SmartImage 
-            src="/input_file_2.png" 
-            alt="Overlimit Logo" 
-            className="h-12 md:h-16 w-auto object-contain" 
-            fallbackIcon={<Shield className="w-8 h-8 text-light-cyan" />}
-          />
-          <span className="font-display text-xl md:text-2xl font-black tracking-tighter text-white uppercase italic">
-            OVERLIMIT<span className="text-light-cyan">RP</span>
+      <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center group/header">
+        <div className="flex items-center gap-3 cursor-pointer group/logo">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: [-1, 1, -1, 0] }}
+            transition={{ duration: 0.3 }}
+          >
+            <SmartImage 
+              src="/input_file_2.png" 
+              alt="Overlimit Logo" 
+              className="h-12 md:h-16 w-auto object-contain transition-all duration-300 group-hover/logo:drop-shadow-[0_0_20px_#00BFFF]" 
+              fallbackIcon={<Shield className="w-8 h-8 text-light-cyan" />}
+            />
+          </motion.div>
+          <span className="font-display text-xl md:text-2xl font-black tracking-tighter text-white uppercase italic group-hover/logo:text-light-cyan transition-colors">
+            OVERLIMIT<span className="text-light-cyan group-hover/logo:text-white transition-colors">RP</span>
           </span>
         </div>
         
@@ -44,10 +49,14 @@ export default function Header() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            const cfs = 'play.overlimit.gr:30120';
+            navigator.clipboard.writeText(cfs);
+          }}
           className="neon-border px-8 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] bg-transparent hover:bg-light-cyan hover:text-dark-black transition-colors skew-btn"
-          id="connect-now-button"
+          id="cta-header-join"
         >
-          <span className="block">CONNECT NOW</span>
+          <span className="block">JOIN NETWORK</span>
         </motion.button>
       </div>
     </motion.header>

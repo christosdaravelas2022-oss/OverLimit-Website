@@ -1,39 +1,125 @@
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronRight, Shield, Activity, Scale, X, Send, Heart, Zap, Camera } from "lucide-react";
+import { ChevronRight, Shield, Activity, Scale, X, Send, Zap, Camera, Lock, Skull } from "lucide-react";
 import SmartImage from "./SmartImage";
+import { db } from "../lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { auth } from "../lib/firebase";
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 const jobs = [
   { 
+    title: "Ownership", 
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800&auto=format&fit=crop",
+    desc: "Διαχείριση και υποδομές. Καθορίστε το μέλλον του Overlimit.",
+    icon: <Lock className="w-12 h-12 text-light-cyan/20" />
+  },
+  { 
     title: "Ελληνική Αστυνομία", 
-    image: "/input_file_4.png",
-    desc: "Elite Tactical Units. Maintain order with precision and equipment.",
+    image: "https://upload.wikimedia.org/wikipedia/el/thumb/a/ac/Greek_police_logo.svg/1280px-Greek_police_logo.svg.png",
+    desc: "Ελίτ τακτικές μονάδες. Διατηρήστε την τάξη με πειθαρχία και εξοπλισμό.",
     icon: <Shield className="w-12 h-12 text-light-cyan/20" />
   },
   { 
+    title: "Λιμενικό Σώμα", 
+    image: "https://upload.wikimedia.org/wikipedia/el/c/c3/Hellenic_Coast_Guard_coat_of_arms.png",
+    desc: "Ναυτική ασφάλεια και επιχειρήσεις διάσωσης. Κυριαρχήστε στις ελληνικές θάλασσες.",
+    icon: <Activity className="w-12 h-12 text-light-cyan/20" />
+  },
+  { 
     title: "ΕΚΑΒ", 
-    image: "/input_file_3.png",
-    desc: "Speed and survival. Join the medical response team.",
+    image: "https://upload.wikimedia.org/wikipedia/el/4/44/EKAB_logo.png",
+    desc: "Ταχύτητα και επιβίωση. Γίνετε μέλος της ιατρικής ομάδας άμεσης επέμβασης.",
     icon: <Activity className="w-12 h-12 text-light-cyan/20" />
   },
   { 
     title: "Δικαστικό Μέγαρο", 
-    image: "/input_file_5.png",
-    desc: "Legal mastery. Balance the scales of the city's future.",
+    image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=800&auto=format&fit=crop",
+    desc: "Νόμος και δικαιοσύνη. Οι φύλακες του δικαίου στον Overlimit.",
     icon: <Scale className="w-12 h-12 text-light-cyan/20" />
   },
   { 
     title: "Staff Team", 
-    image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop",
-    desc: "The architects of the over limit. Integrity and excellence.",
+    image: "file:///C:/Users/chris/Downloads/Logo.png",
+    desc: "Οι αρχιτέκτονες του Overlimit. Ακεραιότητα και αριστεία.",
     icon: <Zap className="w-12 h-12 text-light-cyan/20" />
+  },
+  { 
+    title: "FBI", 
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS5UPdTExJSjtYy_3VLJbB4ftA56NmhAqIVCg&s",
+    desc: "Ομοσπονδιακή υπηρεσία πληροφοριών. Εξουδετερώστε τις μεγαλύτερες απειλές της πόλης.",
+    icon: <Lock className="w-12 h-12 text-light-cyan/20" />
+  },
+  { 
+    title: "Αγροφυλακή", 
+    image: "https://www.newsbeast.gr/files/1/2010/07/10/agorfilaki.jpg",
+    desc: "Προστασία της υπαίθρου και του περιβάλλοντος. Οι άγρυπνοι φρουροί της φύσης.",
+    icon: <Shield className="w-12 h-12 text-light-cyan/20" />
+  },
+  { 
+    title: "Στρατός", 
+    image: "https://upload.wikimedia.org/wikipedia/commons/8/85/HellenicArmySeal.svg",
+    desc: "Ειδικές δυνάμεις και τακτικές επιχειρήσεις. Η απόλυτη πειθαρχία και ισχύς.",
+    icon: <Activity className="w-12 h-12 text-light-cyan/20" />
+  },
+  { 
+    title: "Illegal Organization", 
+    image: "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?q=80&w=800&auto=format&fit=crop",
+    desc: "Δύναμη, σεβασμός και υπόκοσμος. Χτίστε την αυτοκρατορία σας.",
+    icon: <Skull className="w-12 h-12 text-light-cyan/20" />
   },
   { 
     title: "Streamer / Content Creator", 
     image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop",
-    desc: "Broadcast the action. Partner with Overlimit for growth.",
+    desc: "Μεταδώστε τη δράση. Συνεργαστείτε με τον Overlimit για ανάπτυξη.",
     icon: <Camera className="w-12 h-12 text-light-cyan/20" />
-  },
+  }
 ];
 
 interface ApplicationModalProps {
@@ -42,6 +128,36 @@ interface ApplicationModalProps {
 }
 
 const GREEK_QUESTIONS: Record<string, { label: string; placeholder: string; type: 'text' | 'textarea' | 'number' }[]> = {
+  'Λιμενικό Σώμα': [
+    { label: 'Ονοματεπώνυμο Χαρακτήρα / Ηλικία', placeholder: 'π.χ. Ανδρέας Νικολάου / 26', type: 'text' },
+    { label: 'Προηγούμενη Εμπειρία στη θάλασσα (RP)', placeholder: 'Έχετε υπάρξει ξανά σε σώμα ασφαλείας;', type: 'textarea' },
+    { label: 'Γιατί θέλετε να ενταχθείτε στο Λιμενικό;', placeholder: 'Ποιο είναι το κίνητρό σας;', type: 'textarea' },
+    { label: 'Γνώσεις Κανονισμών', placeholder: 'Πόσο καλά γνωρίζετε τους κανόνες πλεύσης και RP;', type: 'textarea' },
+  ],
+  'FBI': [
+    { label: 'Ονοματεπώνυμο / Ηλικία', placeholder: 'π.χ. John Doe / 28', type: 'text' },
+    { label: 'Εξειδίκευση (Cyber / Field / Tactical)', placeholder: 'Ποιο είναι το δυνατό σας σημείο;', type: 'text' },
+    { label: 'Γιατί FBI και όχι Αστυνομία;', placeholder: 'Τι σας κάνει να ξεχωρίζετε;', type: 'textarea' },
+    { label: 'Κανανόηση Διαβαθμισμένων Πληροφοριών', placeholder: 'Πώς διαχειρίζεστε το απόρρητο;', type: 'textarea' },
+  ],
+  'Αγροφυλακή': [
+    { label: 'Ονοματεπώνυμο / Ηλικία', placeholder: 'π.χ. Κώστας Γεωργίου / 32', type: 'text' },
+    { label: 'Γνώσεις Χλωρίδας/Πανίδας (RP)', placeholder: 'Πόσο καλά γνωρίζετε την ύπαιθρο;', type: 'textarea' },
+    { label: 'Εμπειρία σε οδήγηση Off-road', placeholder: 'Κατέχετε τις απαραίτητες δεξιότητες;', type: 'text' },
+    { label: 'Γιατί επιλέξατε την Αγροφυλακή;', placeholder: 'Ποιο είναι το κίνητρό σας;', type: 'textarea' },
+  ],
+  'Στρατός': [
+    { label: 'Ονοματεπώνυμο / Ηλικία', placeholder: 'π.χ. Δημήτρης Μαρκάκης / 24', type: 'text' },
+    { label: 'Προηγούμενη θητεία (RP)', placeholder: 'Περιγράψτε το στρατιωτικό σας ιστορικό...', type: 'textarea' },
+    { label: 'Ειδικότητα (Ελεύθερος Σκοπευτής / Μηχανικός / κλπ)', placeholder: 'Ποια είναι η ειδικότητά σας;', type: 'text' },
+    { label: 'Υπακοή σε διαταγές & Πειθαρχία', placeholder: 'Πώς λειτουργείτε υπό πίεση και ιεραρχία;', type: 'textarea' },
+  ],
+  'Illegal Organization': [
+    { label: 'Όνομα Οργάνωσης', placeholder: 'π.χ. Vagos / Mafia / Cartel', type: 'text' },
+    { label: 'Αριθμός Μελών (Minimum 5)', placeholder: 'Πόσα άτομα είστε;', type: 'text' },
+    { label: 'Story / Backstory Οργάνωσης', placeholder: 'Πού εδρεύετε; Ποιο είναι το lore σας;', type: 'textarea' },
+    { label: 'Γιατί να εγκριθεί η δική σας οργάνωση;', placeholder: 'Τι διαφορετικό θα προσφέρετε στο illegal RP;', type: 'textarea' },
+  ],
   'Ελληνική Αστυνομία': [
     { label: 'Ονοματεπώνυμο Χαρακτήρα / Ηλικία', placeholder: 'π.χ. Γιώργος Παππάς / 25', type: 'text' },
     { label: 'Προηγούμενη Εμπειρία', placeholder: 'Περιγράψτε το ιστορικό σας σε παρόμοια τμήματα...', type: 'textarea' },
@@ -59,6 +175,12 @@ const GREEK_QUESTIONS: Record<string, { label: string; placeholder: string; type
     { label: 'Γνώση των Νόμων της Πόλης', placeholder: 'Πόσο καλά γνωρίζετε το νομικό πλαίσιο;', type: 'textarea' },
     { label: 'Προηγούμενη εμπειρία σε Νομικά/Δικαστικά', placeholder: 'Έχετε υπάρξει δικηγόρος ή δικαστής;', type: 'textarea' },
     { label: 'Στόχος σας στο Δικαστικό Σώμα', placeholder: 'Πώς θα βοηθήσετε στην απονομή δικαιοσύνης;', type: 'textarea' },
+  ],
+  'Ownership': [
+    { label: 'Ονοματεπώνυμο / Ηλικία', placeholder: 'π.χ. Αλέξανδρος Παππάς / 25', type: 'text' },
+    { label: 'Προηγούμενη εμπειρία σε Management', placeholder: 'Έχετε υπάρξει ξανά σε θέση ευθύνης;', type: 'textarea' },
+    { label: 'Στόχος σας για τον Server', placeholder: 'Πώς βλέπετε την εξέλιξη του Overlimit;', type: 'textarea' },
+    { label: 'Ποιες είναι οι γνώσεις σας σε Infrastructure;', placeholder: 'Περιγράψτε την τεχνική σας εμπειρία αν υπάρχει...', type: 'textarea' },
   ],
   'Staff Team': [
     { label: 'Ονοματεπώνυμο / Ηλικία', placeholder: 'π.χ. Μάριος Ανδρέου / 22', type: 'text' },
@@ -102,10 +224,47 @@ function ApplicationModal({ job, onClose }: ApplicationModalProps) {
     setIsSubmitting(true);
     setErrorMsg(null);
 
-    const webhookUrl = (import.meta as any).env.VITE_DISCORD_WEBHOOK_URL;
-    let submissionSuccess = true;
+    const defaultWebhook = (import.meta as any).env.VITE_DISCORD_WEBHOOK_URL;
+    const emsWebhook = "https://discord.com/api/webhooks/1502567238064930848/upntstFYv8hmmMjmXnwyOP2gHaCMypLBXJ9HFDH1HAFtcfLZr3w_oTQXKEa8y83MBHHT";
+    const staffWebhook = "https://discord.com/api/webhooks/1502569452472897547/6xicgRJoRUDe3fOu9p_ZaM97mFXmRg-QrygBgEaOkklqS50uif69BTYofeZkpC2VC7rS";
+    const ownershipWebhook = "https://discord.com/api/webhooks/1502570329917362297/Jb0wIuckVNLG4d9A-3NoE00YciH6VdE09d9QvPAt5GdDe9ELp-j4Edho8MD-g1dI0Mer";
+    const coastGuardWebhook = "https://discord.com/api/webhooks/1502583609998184528/KJBZPerQG6Q7HZeXRnNhzjDuHiyZQfhgVfgApTnZZ79K3KEuHdFU4DmENpMRo_Wfg_l5";
+    const fbiWebhook = "https://discord.com/api/webhooks/1502584629335560203/knpvN4rl-sajze0OOOnqBTz5ZEKhD0EbjfS89MugkzQxIwSz2PwKohokloAaFfaPG3y0";
+    const armyWebhook = "https://discord.com/api/webhooks/1502586387881263115/l9XFeuAw0wXdUQEf4jUWPCxKQ4wemoEs2pGWOq1gcXJhhk1oAsnlqqvSCOhK3WXWNbci";
+    const forestCopsWebhook = "https://discord.com/api/webhooks/1502587041605746831/XqXGGsiRPbadiDm_lcWqsPK__DVQ-h_33I_vTWx07gCo9XJYf2K2pk2ldbCS4ghX74cu";
 
-    if (webhookUrl) {
+    const webhookUrl = 
+      job.title === 'ΕΚΑΒ' ? emsWebhook : 
+      job.title === 'Staff Team' ? staffWebhook : 
+      job.title === 'Λιμενικό Σώμα' ? coastGuardWebhook : 
+      job.title === 'FBI' ? fbiWebhook :
+      job.title === 'Στρατός' ? armyWebhook :
+      job.title === 'Αγροφυλακή' ? forestCopsWebhook :
+      job.title === 'Ownership' ? ownershipWebhook :
+      defaultWebhook;
+    let submissionSuccess = true;
+    let docId = "";
+
+    try {
+      // Save to Firestore first
+      const docRef = await addDoc(collection(db, "applications"), {
+        jobTitle: job.title,
+        discordTag: formData.discordTag,
+        formData: formData,
+        status: "pending",
+        createdAt: serverTimestamp()
+      });
+      docId = docRef.id;
+    } catch (error) {
+      submissionSuccess = false;
+      try {
+        handleFirestoreError(error, OperationType.CREATE, "applications");
+      } catch (customErr) {
+        // Suppress console.error to prevent potential cross-origin cloning issues
+      }
+    }
+
+    if (submissionSuccess && webhookUrl) {
       try {
         const fieldsArr = Object.entries(formData).map(([key, value]) => ({
           name: key === 'discordTag' ? 'Discord Tag' : key,
@@ -116,18 +275,17 @@ function ApplicationModal({ job, onClose }: ApplicationModalProps) {
         const response = await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(getDiscordWebhookPayload(job, fieldsArr))
+          body: JSON.stringify(getDiscordWebhookPayload(job, fieldsArr, docId))
         });
         
-        if (!response.ok) submissionSuccess = false;
+        if (!response.ok) {
+           console.warn("Webhook failed but Firestore saved.");
+        }
       } catch (error) {
-        console.error("Failed to send webhook:", error);
-        submissionSuccess = false;
+        // Suppressed console.error webhook failure to prevent clone aborts
       }
-    } else {
-      console.warn("Discord Webhook URL not configured. Submitting locally (simulation).");
-      // Still show success in dev as requested by design philosophy for no mock infrastructure
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    } else if (!webhookUrl && submissionSuccess) {
+      console.warn("Discord Webhook URL not configured. Submitting via Firestore only.");
     }
 
     setIsSubmitting(false);
@@ -138,7 +296,6 @@ function ApplicationModal({ job, onClose }: ApplicationModalProps) {
     }
   };
 
-  // Handle success auto-close in a dedicated effect
   React.useEffect(() => {
     if (isSuccess) {
       const timer = setTimeout(() => {
@@ -148,12 +305,13 @@ function ApplicationModal({ job, onClose }: ApplicationModalProps) {
     }
   }, [isSuccess, onClose]);
 
-  const getDiscordWebhookPayload = (job: any, fields: any[]) => {
+  const getDiscordWebhookPayload = (job: any, fields: any[], docId: string) => {
+    const adminUrl = `https://over-limit-website.vercel.app/#admin=true&category=${encodeURIComponent(job.title)}&id=portal-${docId}`;
     return {
       embeds: [{
         title: `📩 Νέα Αίτηση: ${job.title}`,
-        description: "Μια νέα αίτηση υποβλήθηκε μέσω του Overlimit Portal.",
-        color: 3447003, // Blue
+        description: `Μια νέα αίτηση υποβλήθηκε μέσω του Overlimit Portal.\n\n🔗 **[ΔΙΑΧΕΙΡΙΣΗ ΑΙΤΗΣΗΣ ΜΕΣΩ PORTAL](${adminUrl})**`,
+        color: 3447003,
         fields: [
           ...fields,
           { 
@@ -161,8 +319,8 @@ function ApplicationModal({ job, onClose }: ApplicationModalProps) {
             value: " " 
           },
           { 
-            name: "ΔΙΑΧΕΙΡΙΣΗ ΑΙΤΗΣΗΣ", 
-            value: "✅ **Accept:** Πατήστε το reaction ✅\n❌ **Reject:** Πατήστε το reaction ❌\n\n*Σημείωση: Η επικοινωνία θα γίνει μέσω Discord DM.*" 
+            name: "ΟΔΗΓΙΕΣ", 
+            value: "Πατήστε το παραπάνω link για να δείτε την αίτηση στο Portal και να την **ΕΓΚΡΙΝΕΤΕ** ή να την **ΑΠΟΡΡΙΨΕΤΕ**.\n\n*Σημείωση: Απαιτείται πρόσβαση μόνο απο εξουσιοδοτημένο πρωσοπικό.*" 
           }
         ],
         timestamp: new Date().toISOString(),
@@ -179,7 +337,7 @@ function ApplicationModal({ job, onClose }: ApplicationModalProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark-black/90 backdrop-blur-md"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-dark-black/90 backdrop-blur-md"
     >
       <motion.div 
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -189,7 +347,6 @@ function ApplicationModal({ job, onClose }: ApplicationModalProps) {
       >
         {/* Left Side - Job Info */}
         <div className="w-full md:w-5/12 relative hidden md:block border-r border-white/10">
-           {/* HUD Markers */}
            <div className="absolute top-4 left-4 hud-corner border-t border-l z-20" />
            <div className="absolute top-4 right-4 hud-corner border-t border-r z-20" />
            <div className="absolute bottom-4 left-4 hud-corner border-b border-l z-20" />
@@ -198,7 +355,7 @@ function ApplicationModal({ job, onClose }: ApplicationModalProps) {
            <SmartImage 
              src={job.image} 
              alt={job.title} 
-             className="w-full h-full object-cover grayscale brightness-25 scale-110"
+             className="w-full h-full object-cover grayscale brightness-75 scale-110"
            />
            <div className="absolute inset-0 bg-gradient-to-t from-dark-black via-dark-black/60 to-transparent" />
            <div className="absolute bottom-10 left-10 right-10">
@@ -311,7 +468,7 @@ export default function JobApplications() {
 
   return (
     <section className="py-24 bg-deep-navy/20 relative" id="jobs">
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="container mx-auto px-6">
         <div className="text-center mb-16 relative">
           <div className="absolute top-1/2 left-0 w-full hud-line -z-10" />
           <div className="inline-block bg-dark-black px-8">
@@ -333,37 +490,24 @@ export default function JobApplications() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.15 }}
               onClick={() => setSelectedJob(job)}
-              className="group relative h-[450px] rounded-sm overflow-hidden border border-white/5 cursor-pointer skew-x-[-2deg] shadow-[0_0_20px_rgba(0,0,0,0.5)]"
-              id={`job-${job.title.toLowerCase().replace(' ', '-')}`}
+              className="group relative h-[450px] rounded-sm overflow-hidden border border-white/5 cursor-pointer skew-x-[-2deg]"
             >
-              <div className="absolute inset-0 z-[5] pointer-events-none group-hover:opacity-100 opacity-30 transition-opacity">
-                <div className="hud-corner top-4 left-4 border-t border-l" />
-                <div className="hud-corner top-4 right-4 border-t border-r" />
-                <div className="hud-corner bottom-4 left-4 border-b border-l" />
-                <div className="hud-corner bottom-4 right-4 border-b border-r" />
-              </div>
-
               <div className="absolute inset-0 bg-gradient-to-t from-dark-black via-dark-black/40 to-transparent z-10" />
               <SmartImage 
                 src={job.image} 
                 alt={job.title} 
-                className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-700 group-hover:scale-110 skew-x-[2deg]" 
+                className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-700" 
                 fallbackIcon={job.icon}
               />
-              
               <div className="absolute bottom-0 left-0 right-0 p-8 z-20 skew-x-[2deg]">
-                <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 bg-light-cyan text-dark-black">
-                   <span className="text-[10px] uppercase font-black tracking-widest">Active Recruitment</span>
-                </div>
                 <h3 className="heading-massive text-4xl text-white mb-2 group-hover:text-light-cyan transition-colors">
                   {job.title}
                 </h3>
-                <p className="font-sans text-sm text-soft-gray mb-6 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-300">
+                <p className="font-sans text-sm text-soft-gray mb-6">
                   {job.desc}
                 </p>
-                <div className="flex items-center gap-2 text-light-cyan font-technical font-black text-xs tracking-[0.2em] uppercase underline-offset-4 hover:underline">
-                  Initiate Career
-                  <ChevronRight className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-light-cyan font-technical font-black text-xs tracking-[0.2em] uppercase">
+                  Apply Now <ChevronRight className="w-4 h-4" />
                 </div>
               </div>
             </motion.div>
@@ -373,10 +517,7 @@ export default function JobApplications() {
 
       <AnimatePresence>
         {selectedJob && (
-          <ApplicationModal 
-            job={selectedJob} 
-            onClose={() => setSelectedJob(null)} 
-          />
+          <ApplicationModal job={selectedJob} onClose={() => setSelectedJob(null)} />
         )}
       </AnimatePresence>
     </section>

@@ -8,6 +8,78 @@ interface ModalProps {
 }
 
 export function ServerStatsModal({ isOpen, onClose }: ModalProps) {
+  const [stats, setStats] = React.useState({
+    totalMembers: 0,
+    todayAdded: 0, 
+    vcMembers: 0,
+    onlineMembers: 0,
+    loading: true,
+    widgetEnabled: false,
+    guildId: "1493591550301569165"
+  });
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    
+    let isMounted = true;
+    
+    const fetchStats = async () => {
+      try {
+        setStats(s => ({ ...s, loading: true }));
+        // 1. Fetch overall counts via Invite API
+        const inviteRes = await fetch("https://discord.com/api/invites/83fQBbKYNE?with_counts=true");
+        const inviteData = await inviteRes.json();
+        
+        // 2. Fetch VC counts via Widget API (Requires Server Widget to be enabled in Discord settings!)
+        // Guild ID obtained from previous invite tests
+        const guildId = inviteData?.guild?.id || "1493591550301569165";
+        let vcMembers = 0;
+        let widgetEnabled = false;
+        
+        try {
+          const widgetRes = await fetch(`https://discord.com/api/guilds/${guildId}/widget.json`);
+          if (widgetRes.ok) {
+            const widgetData = await widgetRes.json();
+            if (!widgetData.code) { // if code 50004 or similar, it's disabled or errored
+              widgetEnabled = true;
+              // Calculate members inside a voice channel 
+              if (widgetData.members && Array.isArray(widgetData.members)) {
+                vcMembers = widgetData.members.filter((m: any) => m.channel_id).length;
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Widget fetch failed. Widget likely disabled in server settings.", err);
+        }
+
+        if (isMounted) {
+          setStats({
+            totalMembers: inviteData.approximate_member_count || 0,
+            onlineMembers: inviteData.approximate_presence_count || 0,
+            vcMembers: widgetEnabled ? vcMembers : 0,
+            todayAdded: 0, 
+            loading: false,
+            widgetEnabled: widgetEnabled,
+            guildId
+          });
+        }
+      } catch (error) {
+        console.error("Failed fetching Discord stats", error);
+        if (isMounted) {
+          setStats(s => ({ ...s, loading: false }));
+        }
+      }
+    };
+    
+    fetchStats();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -43,10 +115,16 @@ export function ServerStatsModal({ isOpen, onClose }: ModalProps) {
                     </div>
                     <div>
                       <div className="text-[10px] font-black text-soft-gray uppercase tracking-widest">Discord Members</div>
-                      <div className="text-xl font-display font-black text-white italic">12,482</div>
+                      <div className="text-xl font-display font-black text-white italic">
+                        {stats.loading ? "..." : stats.totalMembers.toLocaleString()}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-[10px] font-black text-green-500 uppercase tracking-widest">+142 Today</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-right">
+                    <span className="text-green-500">
+                      {stats.loading ? "" : `${stats.onlineMembers.toLocaleString()} Online`}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="p-5 bg-white/5 border border-white/10 rounded-sm flex items-center justify-between group hover:border-light-cyan/30 transition-colors">
@@ -60,8 +138,10 @@ export function ServerStatsModal({ isOpen, onClose }: ModalProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-[10px] font-black text-white uppercase tracking-widest">84 in VC</span>
+                    <span className={`w-2 h-2 rounded-full animate-pulse bg-green-500`} />
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest text-right">
+                      {stats.loading ? "..." : `${stats.vcMembers} in VC`}
+                    </span>
                   </div>
                 </div>
 
@@ -163,10 +243,10 @@ export function SupportModal({ isOpen, onClose, initialTab = 'info' }: SupportMo
                     </div>
                     <h3 className="font-display text-3xl font-black text-white italic uppercase tracking-tighter mb-4">Support <span className="text-light-cyan">Portal</span></h3>
                     <p className="font-sans text-sm text-soft-gray mb-8 leading-relaxed">
-                      If you want any support or have a question, join our Discord and open a ticket. 
+                      If you want help, just make a support ticket or you can join the "Waiting for Support" call to be served directly.
                       <br /><br />
-                      <span className="text-white font-black uppercase text-[10px] tracking-widest block mb-2 underline decoration-light-cyan/30 underline-offset-4">Mid-Assistance Info:</span>
-                      You can request support or go through the specific "Waiting for Support" channel to be served by a team member in real-time.
+                      <span className="text-white font-black uppercase text-[10px] tracking-widest block mb-2 underline decoration-light-cyan/30 underline-offset-4">Need Staff?</span>
+                      If you need someone from the Staff Team, open a ticket or join the waiting room in Discord and ping staff.
                     </p>
                     <div className="grid grid-cols-1 gap-4 mb-8">
                       <div className="p-4 bg-white/5 border border-white/10 rounded-sm flex items-center gap-4 text-left">

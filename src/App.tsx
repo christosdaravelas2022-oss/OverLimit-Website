@@ -16,18 +16,35 @@ import Loading from "./components/Loading";
 import Footer from "./components/Footer";
 import { motion, useScroll, useSpring, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ServerStatsModal, SupportModal } from "./components/GlobalModals";
 
 export default function App() {
-  const [showTicker, setShowTicker] = React.useState(true);
-  const [isServerStatsOpen, setIsServerStatsOpen] = React.useState(false);
-  const [isSupportOpen, setIsSupportOpen] = React.useState(false);
-  const [supportTab, setSupportTab] = React.useState<'info' | 'terms' | 'privacy'>('info');
-  const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+  const [showTicker, setShowTicker] = useState(true);
+  const [isServerStatsOpen, setIsServerStatsOpen] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [supportTab, setSupportTab] = useState<'info' | 'terms' | 'privacy'>('info');
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-  const handleOpenSupport = (tab: 'info' | 'terms' | 'privacy' = 'info') => {
-    setSupportTab(tab);
+  useEffect(() => {
+    let frameId: number;
+    const handleMouseMove = (e: MouseEvent) => {
+      frameId = requestAnimationFrame(() => {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, []);
+
+  const handleOpenSupport = (tab: 'info' | 'terms' | 'privacy' | any = 'info') => {
+    if (typeof tab !== 'string') {
+      tab = 'info';
+    }
+    setSupportTab(tab as 'info' | 'terms' | 'privacy');
     setIsSupportOpen(true);
   };
   const { scrollYProgress } = useScroll();
@@ -37,40 +54,22 @@ export default function App() {
     restDelta: 0.001
   });
 
-  React.useEffect(() => {
-    let rafId: number;
-    const handleMouseMove = (e: MouseEvent) => {
-      rafId = requestAnimationFrame(() => {
-        setMousePos({ x: e.clientX, y: e.clientY });
-      });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-dark-black font-sans text-white overflow-x-hidden selection:bg-light-cyan selection:text-dark-black dot-grid cursor-none">
       <Loading />
       
-      {/* Custom Cursor Overlay */}
       <div className="hidden lg:block">
-        <motion.div 
+        <motion.div
           className="custom-cursor"
-          animate={{ x: mousePos.x - 10, y: mousePos.y - 10 }}
+          animate={{ x: mousePosition.x - 10, y: mousePosition.y - 10 }}
           transition={{ type: "spring", damping: 25, stiffness: 400, mass: 0.5 }}
         />
-        <motion.div 
+        <motion.div
           className="custom-cursor-inner"
-          animate={{ x: mousePos.x - 2, y: mousePos.y - 2 }}
+          animate={{ x: mousePosition.x - 2, y: mousePosition.y - 2 }}
           transition={{ type: "spring", damping: 15, stiffness: 600, mass: 0.2 }}
         />
       </div>
-
-      {/* Noise Overlay */}
-      <div className="fixed inset-0 pointer-events-none z-[9998] opacity-[0.03] noise-overlay" />
 
       {/* Scroll Progress Bar */}
       <motion.div

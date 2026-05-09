@@ -43,11 +43,13 @@ export default function Streamers() {
                   alt={streamer.name} 
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
+                
                 <div className="absolute inset-0 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="w-12 h-12 bg-light-cyan rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(0,191,255,0.6)]">
                     <Play className="text-dark-black fill-dark-black ml-1 w-6 h-6" />
                   </div>
                 </div>
+                
                 <div className="absolute top-4 left-4 z-20 bg-blue-600 px-2 py-0.5 rounded-sm flex items-center gap-1 shadow-lg">
                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                     <span className="text-[10px] font-bold tracking-widest text-white uppercase">LIVE</span>
