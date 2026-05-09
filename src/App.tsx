@@ -18,6 +18,7 @@ import { motion, useScroll, useSpring, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 import React from "react";
 import { ServerStatsModal, SupportModal } from "./components/GlobalModals";
+import { Analytics } from '@vercel/analytics/react';
 
 export default function App() {
   const [showTicker, setShowTicker] = React.useState(true);
@@ -147,6 +148,7 @@ export default function App() {
           50% { opacity: 0.6; transform: scale(1.1); }
         }
       `}} />
+      <Analytics />
     </div>
   );
 }
