@@ -33,8 +33,14 @@ export default function Showcase() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             whileHover={{ y: -5 }}
-            className="md:col-span-2 md:row-span-2 relative group overflow-hidden rounded-sm glass-panel border-white/5"
+            className="md:col-span-2 md:row-span-2 relative group overflow-hidden rounded-sm glass-panel border-white/5 cursor-crosshair"
           >
+            {/* HUD Elements */}
+            <div className="absolute top-4 left-4 hud-corner border-t border-l z-20 group-hover:scale-125 transition-transform" />
+            <div className="absolute top-4 right-4 hud-corner border-t border-r z-20 group-hover:scale-125 transition-transform" />
+            <div className="absolute bottom-4 left-4 hud-corner border-b border-l z-20 group-hover:scale-125 transition-transform" />
+            <div className="absolute bottom-4 right-4 hud-corner border-b border-r z-20 group-hover:scale-125 transition-transform" />
+            
             <div className="absolute inset-0 bg-gradient-to-t from-dark-black via-transparent to-transparent z-10 opacity-80" />
             <SmartImage 
               src="https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200&auto=format&fit=crop"
@@ -66,7 +72,7 @@ export default function Showcase() {
           >
             <div className="absolute inset-0 bg-gradient-to-t from-dark-black via-transparent to-transparent z-10 opacity-70" />
             <SmartImage 
-              src="https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=1200&auto=format&fit=crop"
+              src="https://images.unsplash.com/photo-1541447271487-09612b3f49f7?q=80&w=1200&auto=format&fit=crop"
               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
               alt="Tactical Units"
             />
@@ -86,12 +92,12 @@ export default function Showcase() {
           >
             <div className="absolute inset-0 bg-gradient-to-t from-dark-black via-transparent to-transparent z-10 opacity-70" />
             <SmartImage 
-              src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=800&auto=format&fit=crop"
-              className="w-full h-full object-cover scale-150 group-hover:scale-[1.6] transition-transform duration-700"
-              alt="Underground Scene"
+              src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop"
+              className="w-full h-full object-cover group-hover:scale-[1.1] transition-transform duration-700"
+              alt="Corporate District"
             />
             <div className="absolute bottom-4 left-4 z-20">
-              <h4 className="font-display text-lg font-black text-white italic uppercase whitespace-nowrap">Underground Nitro</h4>
+              <h4 className="font-display text-lg font-black text-white italic uppercase whitespace-nowrap">Business Hub</h4>
             </div>
           </motion.div>
 
@@ -104,12 +110,13 @@ export default function Showcase() {
             className="relative group overflow-hidden rounded-sm glass-panel border-white/5 h-64 md:h-auto"
           >
             <div className="absolute inset-0 bg-gradient-to-t from-dark-black via-transparent to-transparent z-10 opacity-70" />
-            <div className="w-full h-full bg-graphite flex items-center justify-center border-l-2 border-light-cyan group-hover:bg-light-cyan/5 transition-colors">
-               <div className="text-center">
-                  <Cpu className="w-8 h-8 text-light-cyan mx-auto mb-2 opacity-50 group-hover:opacity-100 transition-opacity" />
-                  <div className="font-display text-4xl font-black text-white">60+</div>
-                  <div className="font-technical text-[10px] text-soft-gray uppercase tracking-widest">Custom Scripts</div>
-               </div>
+            <SmartImage 
+              src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=800&auto=format&fit=crop"
+              className="w-full h-full object-cover group-hover:scale-[1.1] transition-transform duration-700"
+              alt="High Tech Hub"
+            />
+            <div className="absolute bottom-4 left-4 z-20">
+              <h4 className="font-display text-lg font-black text-white italic uppercase whitespace-nowrap">Technical Support</h4>
             </div>
           </motion.div>
         </div>

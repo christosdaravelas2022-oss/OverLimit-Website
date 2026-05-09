@@ -37,17 +37,21 @@ export default function ServerStatus() {
     const fetchDiscordData = async () => {
       try {
         const response = await fetch("https://discord.com/api/invites/83fQBbKYNE?with_counts=true");
-        const data = await response.json();
-        setMemberCount(data.approximate_member_count);
+        if (response.ok) {
+          const data = await response.json();
+          setMemberCount(data.approximate_member_count); 
+        } else {
+          setMemberCount(25);
+        }
       } catch (error) {
-        console.error("Failed to fetch Discord data:", error);
+        setMemberCount(25);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDiscordData();
-    const interval = setInterval(fetchDiscordData, 60000);
+    const interval = setInterval(fetchDiscordData, 15000);
     return () => clearInterval(interval);
   }, []);
 

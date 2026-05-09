@@ -1,0 +1,25 @@
+{
+  "entities": {
+    "Application": {
+      "title": "Job Application",
+      "description": "A job application submitted by a user",
+      "type": "object",
+      "properties": {
+        "jobTitle": { "type": "string" },
+        "discordTag": { "type": "string" },
+        "formData": { "type": "object" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+        "handledBy": { "type": "string" },
+        "handledAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["jobTitle", "discordTag", "formData", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/applications/{applicationId}": {
+      "schema": "Application",
+      "description": "Collection of all job applications"
+    }
+  }
+}
