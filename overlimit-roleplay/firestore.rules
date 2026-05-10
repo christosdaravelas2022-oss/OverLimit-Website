@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isValidApplication(data) {
+      return data.keys().hasAll(['jobTitle', 'applicantUid', 'discordTag', 'formData', 'status', 'createdAt']) &&
+             data.jobTitle is string && data.jobTitle.size() <= 200 &&
+             data.applicantUid == request.auth.uid &&
+             data.discordTag is string && data.discordTag.size() <= 100 &&
+             data.formData is map && data.formData.size() <= 20 &&
+             data.status in ['pending', 'accepted', 'rejected'] &&
+             data.createdAt == request.time;
+    }
+
+    match /applications/{applicationId} {
+      allow create: if isSignedIn() && isValidApplication(request.resource.data);
+      allow read: if isSignedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      allow update: if isSignedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous' && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'handledBy', 'handledAt'])
+      );
+    }
+  }
+}
